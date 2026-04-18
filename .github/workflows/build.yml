@@ -1,0 +1,73 @@
+name: Build Windows & macOS
+
+# Runs automatically when you publish a Release on GitHub
+on:
+  release:
+    types: [published]
+
+jobs:
+
+  # ── Windows ───────────────────────────────────────────────────────────────
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install customtkinter cairosvg Pillow pyinstaller
+
+      - name: Build exe
+        run: |
+          python -m PyInstaller --onefile --windowed `
+            --name "TischEins_Prompt_Generator" `
+            --hidden-import customtkinter `
+            --collect-all customtkinter `
+            --collect-all cairosvg `
+            --add-data "assets;assets" `
+            main.py
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/TischEins_Prompt_Generator.exe
+
+  # ── macOS ─────────────────────────────────────────────────────────────────
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install customtkinter cairosvg Pillow pyinstaller
+
+      - name: Build app
+        run: |
+          python -m PyInstaller --onefile --windowed \
+            --name "TischEins_Prompt_Generator" \
+            --hidden-import customtkinter \
+            --collect-all customtkinter \
+            --collect-all cairosvg \
+            --add-data "assets:assets" \
+            main.py
+
+      - name: Zip the .app for download
+        run: |
+          cd dist
+          zip -r TischEins_Prompt_Generator_macOS.zip TischEins_Prompt_Generator.app
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/TischEins_Prompt_Generator_macOS.zip
